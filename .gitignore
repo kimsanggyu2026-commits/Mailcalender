@@ -1,0 +1,24 @@
+# Secrets / credentials
+.env
+credentials.json
+token.json
+*.token.json
+
+# Generated output
+output/
+*.ics
+reports/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -103,6 +103,54 @@ def build_report(analyses: list[EmailAnalysis]) -> str:
     return "\n".join(lines)
 
 
+def build_telegram_summary(analyses: list[EmailAnalysis], max_len: int = 3500) -> str:
+    """텔레그램 메시지용 간결한 요약 (HTML parse_mode 기준)."""
+    import html
+
+    def esc(s: str) -> str:
+        return html.escape(s)
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    total = len(analyses)
+    high = [a for a in analyses if a.importance == "high"]
+    action = [a for a in analyses if a.action_required]
+    all_events = sorted(
+        (ev for a in analyses for ev in a.events), key=lambda e: e.start
+    )
+
+    parts: list[str] = []
+    parts.append(f"📬 <b>메일 요약</b>  ({esc(now)})")
+    parts.append(
+        f"총 {total}통 · 주요 {len(high)}통 · 액션 {len(action)}통 · 일정 {len(all_events)}건"
+    )
+
+    if high:
+        parts.append("\n⭐ <b>주요 메일</b>")
+        for a in high[:5]:
+            parts.append(f"• <b>{esc(a.email.subject)}</b> — {esc(a.email.sender)}")
+            parts.append(f"  {esc(a.summary)}")
+
+    if action:
+        parts.append("\n✅ <b>액션 필요</b>")
+        for a in action[:8]:
+            parts.append(f"• {esc(a.email.subject)} ({_IMPORTANCE_LABEL[a.importance]})")
+
+    if all_events:
+        parts.append("\n🗓️ <b>일정 제안</b>")
+        for ev in all_events[:10]:
+            when = (
+                ev.start.strftime("%Y-%m-%d")
+                if ev.all_day
+                else ev.start.strftime("%Y-%m-%d %H:%M")
+            )
+            parts.append(f"• {esc(when)} — {esc(ev.title)}")
+
+    text = "\n".join(parts)
+    if len(text) > max_len:
+        text = text[:max_len].rsplit("\n", 1)[0] + "\n…(이하 생략, 첨부 보고서 참고)"
+    return text
+
+
 def _append_email_block(lines: list[str], a: EmailAnalysis) -> None:
     lines.append(f"### {a.email.subject}")
     lines.append("")

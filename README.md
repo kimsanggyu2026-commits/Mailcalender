@@ -5,6 +5,7 @@ Gmail 메일을 가져와 **규칙 기반**으로 분류하고, 주요 메일을
 
 - ✅ **API 비용 0원** — Claude/OpenAI 등 외부 AI를 쓰지 않고 발신자·키워드 규칙과 정규식만 사용
 - ✅ **PC 없이 자동 실행** — GitHub Actions(cron)로 클라우드에서 정해진 시각마다 무인 실행
+- ✅ **텔레그램 알림** — 매일 결과(요약·일정)와 보고서/`.ics` 파일을 텔레그램으로 자동 전송
 - ✅ **캘린더 안전** — 캘린더에 직접 쓰지 않고 `.ics` 로 '제안'만 (가져오기로 사용자가 등록)
 
 > 규칙 기반은 무료·즉시 동작이 장점이고, 요약 품질은 AI 방식보다 단순합니다.
@@ -26,8 +27,9 @@ Mailcalender/
 │   ├── gmail_client.py      # Gmail 읽기 (로컬/CI 인증 모두 지원)
 │   ├── analyzer.py          # 규칙 기반 분류·중요도·요약·일정추출
 │   ├── dateparse.py         # 날짜/시간 정규식 파서
-│   ├── report.py            # Markdown 보고서 생성
+│   ├── report.py            # Markdown 보고서 + 텔레그램 요약 생성
 │   ├── calendar_ics.py      # .ics 캘린더 파일 생성
+│   ├── notify_telegram.py   # 텔레그램 알림 전송
 │   └── models.py            # 데이터 모델
 └── .github/workflows/
     └── triage.yml           # GitHub Actions 자동 실행
@@ -86,6 +88,27 @@ python main.py
 
 ---
 
+## 📨 텔레그램 알림 설정 (선택)
+
+매일 결과를 텔레그램으로 받아보려면:
+
+1. 텔레그램에서 **@BotFather** 에게 `/newbot` → 봇 이름 정하면 **봇 토큰** 발급
+2. 만든 봇과 **대화 시작**(아무 메시지나 전송)
+3. 브라우저에서 `https://api.telegram.org/bot<봇토큰>/getUpdates` 접속 →
+   결과 JSON 의 `"chat":{"id": ...}` 값이 **chat id**
+4. 설정 등록
+   - **로컬**: `.env` 에 `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` 입력
+   - **GitHub Actions**: 저장소 Secret 으로 `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` 등록
+
+설정하면 실행 시 다음이 텔레그램으로 전송됩니다:
+- 요약 메시지 (총계 · 주요 메일 · 액션 필요 · 일정 제안)
+- `report.md` 전체 보고서 파일
+- 일정이 있으면 `events.ics` 파일
+
+> 두 값 중 하나라도 비어 있으면 알림은 자동으로 건너뜁니다.
+
+---
+
 ## ⚙️ 설정 (.env)
 
 | 변수 | 설명 | 기본값 |
@@ -93,6 +116,8 @@ python main.py
 | `GMAIL_QUERY` | 가져올 메일 검색 (Gmail 검색 문법) | `is:unread newer_than:2d` |
 | `MAX_EMAILS` | 한 번에 처리할 최대 메일 수 | `30` |
 | `OUTPUT_DIR` | 보고서/ics 출력 폴더 | `output` |
+| `TELEGRAM_BOT_TOKEN` | (선택) 텔레그램 봇 토큰 | _(없으면 알림 생략)_ |
+| `TELEGRAM_CHAT_ID` | (선택) 텔레그램 채팅 ID | _(없으면 알림 생략)_ |
 
 검색 쿼리 예시: `in:inbox newer_than:1d`, `is:important newer_than:7d`, `from:boss@company.com`
 

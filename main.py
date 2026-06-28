@@ -12,7 +12,8 @@ from config import load_config
 from src.analyzer import analyze_all
 from src.calendar_ics import write_ics
 from src.gmail_client import fetch_emails
-from src.report import build_report
+from src.report import build_report, build_telegram_summary
+from src import notify_telegram
 
 
 def main() -> None:
@@ -46,6 +47,20 @@ def main() -> None:
     events = [ev for a in analyses for ev in a.events]
     ics_path = os.path.join(config.output_dir, "events.ics")
     write_ics(events, ics_path)
+
+    # 텔레그램 알림 (설정된 경우에만)
+    if notify_telegram.is_configured(config):
+        print("[+] 텔레그램으로 결과 전송 중...")
+        summary = build_telegram_summary(analyses)
+        if notify_telegram.send_message(config, summary):
+            notify_telegram.send_document(config, report_path, caption="📄 전체 요약 보고서")
+            if events:
+                notify_telegram.send_document(
+                    config, ics_path, caption="🗓️ 일정 제안 (캘린더에서 가져오기)"
+                )
+            print("      → 전송 완료")
+    else:
+        print("[i] 텔레그램 미설정 (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) → 알림 건너뜀")
 
     print("\n완료 ✅")
     print(f"  - 보고서:      {report_path}")

@@ -32,6 +32,9 @@ jobs:
           GMAIL_QUERY: ${{ vars.GMAIL_QUERY || 'is:unread newer_than:1d' }}
           MAX_EMAILS: ${{ vars.MAX_EMAILS || '30' }}
           OUTPUT_DIR: output
+          # 텔레그램 알림 (저장소 Secrets 에 등록)
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
 
       - name: Upload report artifact

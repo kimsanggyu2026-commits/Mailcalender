@@ -19,6 +19,8 @@ class Config:
     output_dir: str
     credentials_file: str
     token_file: str
+    telegram_bot_token: str
+    telegram_chat_id: str
 
 
 def load_config() -> Config:
@@ -28,4 +30,6 @@ def load_config() -> Config:
         output_dir=os.getenv("OUTPUT_DIR", "output").strip(),
         credentials_file=os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json").strip(),
         token_file=os.getenv("GOOGLE_TOKEN_FILE", "token.json").strip(),
+        telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", "").strip(),
+        telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", "").strip(),
     )

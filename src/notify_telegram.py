@@ -22,6 +22,19 @@ def is_configured(config: Config) -> bool:
     return bool(config.telegram_bot_token and config.telegram_chat_id)
 
 
+def check(config: Config) -> tuple[bool, str]:
+    """연결 점검: getMe 로 봇 토큰 유효성 확인."""
+    url = _API.format(token=config.telegram_bot_token, method="getMe")
+    try:
+        resp = requests.get(url, timeout=_TIMEOUT)
+        if resp.status_code != 200:
+            return False, f"HTTP {resp.status_code} {resp.text[:150]}"
+        name = resp.json().get("result", {}).get("username", "?")
+        return True, f"봇 @{name} 연결 OK"
+    except requests.RequestException as e:
+        return False, str(e)
+
+
 def send_message(config: Config, text: str, parse_mode: str = "HTML") -> bool:
     url = _API.format(token=config.telegram_bot_token, method="sendMessage")
     try:

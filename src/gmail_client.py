@@ -127,6 +127,13 @@ def _parse_sender(raw: str) -> tuple[str, str]:
     return (name or addr or raw, addr.lower())
 
 
+def get_profile(config: Config) -> dict:
+    """연결 점검용: 인증 후 내 메일 주소/총 메일 수를 반환."""
+    creds = _authenticate(config)
+    service = build("gmail", "v1", credentials=creds)
+    return service.users().getProfile(userId="me").execute()
+
+
 def fetch_emails(config: Config) -> list[EmailMessage]:
     """검색 쿼리에 맞는 메일을 최대 max_emails개 가져온다."""
     creds = _authenticate(config)

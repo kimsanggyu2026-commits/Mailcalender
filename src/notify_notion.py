@@ -179,6 +179,37 @@ def _append_to_page(config: Config, header: str, blocks: list[dict]) -> bool:
     return _append_children(config, config.notion_page_id, section)
 
 
+def check(config: Config) -> tuple[bool, str]:
+    """연결 점검: 토큰 + 대상 DB/페이지 접근 확인 (통합 연결 여부 포함)."""
+    try:
+        if config.notion_database_id:
+            resp = requests.get(
+                f"{_BASE}/databases/{config.notion_database_id}",
+                headers=_headers(config),
+                timeout=_TIMEOUT,
+            )
+            target = "DB"
+        elif config.notion_page_id:
+            resp = requests.get(
+                f"{_BASE}/pages/{config.notion_page_id}",
+                headers=_headers(config),
+                timeout=_TIMEOUT,
+            )
+            target = "페이지"
+        else:
+            return False, "DATABASE_ID/PAGE_ID 둘 다 없음"
+
+        if resp.status_code == 200:
+            return True, f"{target} 접근 OK"
+        if resp.status_code in (401, 403):
+            return False, f"인증 실패/권한 없음 ({resp.status_code}) — 통합을 대상에 'Connections'로 연결했는지 확인"
+        if resp.status_code == 404:
+            return False, f"대상을 찾을 수 없음(404) — ID 확인 또는 통합 미연결"
+        return False, f"HTTP {resp.status_code} {resp.text[:150]}"
+    except requests.RequestException as e:
+        return False, str(e)
+
+
 def export(config: Config, analyses: list[EmailAnalysis]) -> bool:
     """설정된 모드에 따라 Notion에 누적 저장한다."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")

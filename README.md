@@ -60,7 +60,15 @@ python scripts/get_token.py
 브라우저 로그인 후 `token.json` 이 생성됩니다.
 (출력되는 한 줄은 GitHub Actions용 Secret 값이니 보관하세요.)
 
-### 4. 실행
+### 4. 연결 점검 (선택, 권장)
+키를 `.env`에 넣은 뒤 Gmail·텔레그램·Notion 연결을 한 번에 확인:
+```bash
+python scripts/selftest.py          # 연결만 확인
+python scripts/selftest.py --send   # 텔레그램 테스트 메시지까지 전송
+```
+각 항목이 `✅`(OK) / `⚠️`(경고) / `❌`(실패) / `⏭️`(미설정 건너뜀)로 표시됩니다.
+
+### 5. 실행
 ```bash
 cp .env.example .env   # 필요 시 쿼리/개수 수정
 python main.py

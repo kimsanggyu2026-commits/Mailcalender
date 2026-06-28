@@ -6,6 +6,7 @@ Gmail 메일을 가져와 **규칙 기반**으로 분류하고, 주요 메일을
 - ✅ **API 비용 0원** — Claude/OpenAI 등 외부 AI를 쓰지 않고 발신자·키워드 규칙과 정규식만 사용
 - ✅ **PC 없이 자동 실행** — GitHub Actions(cron)로 클라우드에서 정해진 시각마다 무인 실행
 - ✅ **텔레그램 알림** — 매일 결과(요약·일정)와 보고서/`.ics` 파일을 텔레그램으로 자동 전송
+- ✅ **Notion 누적** — 매 실행 결과를 Notion DB(새 페이지) 또는 한 페이지에 계속 쌓아 기록
 - ✅ **캘린더 안전** — 캘린더에 직접 쓰지 않고 `.ics` 로 '제안'만 (가져오기로 사용자가 등록)
 
 > 규칙 기반은 무료·즉시 동작이 장점이고, 요약 품질은 AI 방식보다 단순합니다.
@@ -30,6 +31,7 @@ Mailcalender/
 │   ├── report.py            # Markdown 보고서 + 텔레그램 요약 생성
 │   ├── calendar_ics.py      # .ics 캘린더 파일 생성
 │   ├── notify_telegram.py   # 텔레그램 알림 전송
+│   ├── notify_notion.py     # Notion 누적 저장
 │   └── models.py            # 데이터 모델
 └── .github/workflows/
     └── triage.yml           # GitHub Actions 자동 실행
@@ -109,6 +111,30 @@ python main.py
 
 ---
 
+## 🗂️ Notion 누적 저장 설정 (선택)
+
+매 실행 결과를 Notion에 계속 쌓아둘 수 있습니다. **두 가지 모드** 중 하나를 고르세요.
+
+| 모드 | 설정 변수 | 동작 |
+|--|--|--|
+| **DB 모드 (권장)** | `NOTION_DATABASE_ID` | 실행마다 DB에 **새 페이지(행)** 생성 → 일별 보고서가 목록으로 누적 |
+| **페이지 모드** | `NOTION_PAGE_ID` | 지정한 **한 페이지 하단**에 매번 섹션 추가 → 한 페이지에 누적 |
+
+설정 방법:
+1. [notion.so/my-integrations](https://www.notion.so/my-integrations) → **New integration** 생성 → **Internal Integration Secret** 복사 = `NOTION_TOKEN`
+2. Notion에서 대상 **데이터베이스(또는 페이지)** 를 열고 우측 상단 **`···` → Connections → 만든 통합 연결**
+3. 대상 ID 확인 (URL에서):
+   - 데이터베이스: `notion.so/<workspace>/<DATABASE_ID>?v=...` 의 `DATABASE_ID`
+   - 페이지: `notion.so/<제목>-<PAGE_ID>` 의 끝 32자리 `PAGE_ID`
+4. 설정 등록
+   - **로컬**: `.env` 에 `NOTION_TOKEN` + (`NOTION_DATABASE_ID` 또는 `NOTION_PAGE_ID`)
+   - **GitHub Actions**: 같은 이름으로 저장소 Secret 등록
+
+> DB 모드를 쓰려면 데이터베이스에 **제목(title) 속성**만 있으면 됩니다(기본 'Name'). 속성 이름은 자동 감지합니다.
+> `NOTION_TOKEN` 이 없거나 DB/PAGE ID가 둘 다 없으면 저장은 자동으로 건너뜁니다.
+
+---
+
 ## ⚙️ 설정 (.env)
 
 | 변수 | 설명 | 기본값 |
@@ -118,6 +144,9 @@ python main.py
 | `OUTPUT_DIR` | 보고서/ics 출력 폴더 | `output` |
 | `TELEGRAM_BOT_TOKEN` | (선택) 텔레그램 봇 토큰 | _(없으면 알림 생략)_ |
 | `TELEGRAM_CHAT_ID` | (선택) 텔레그램 채팅 ID | _(없으면 알림 생략)_ |
+| `NOTION_TOKEN` | (선택) Notion 통합 시크릿 | _(없으면 저장 생략)_ |
+| `NOTION_DATABASE_ID` | (선택) DB 모드 대상 DB | _(DB 모드)_ |
+| `NOTION_PAGE_ID` | (선택) 페이지 모드 대상 페이지 | _(페이지 모드)_ |
 
 검색 쿼리 예시: `in:inbox newer_than:1d`, `is:important newer_than:7d`, `from:boss@company.com`
 

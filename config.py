@@ -21,6 +21,9 @@ class Config:
     token_file: str
     telegram_bot_token: str
     telegram_chat_id: str
+    notion_token: str
+    notion_database_id: str
+    notion_page_id: str
 
 
 def load_config() -> Config:
@@ -32,4 +35,7 @@ def load_config() -> Config:
         token_file=os.getenv("GOOGLE_TOKEN_FILE", "token.json").strip(),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", "").strip(),
         telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", "").strip(),
+        notion_token=os.getenv("NOTION_TOKEN", "").strip(),
+        notion_database_id=os.getenv("NOTION_DATABASE_ID", "").strip(),
+        notion_page_id=os.getenv("NOTION_PAGE_ID", "").strip(),
     )

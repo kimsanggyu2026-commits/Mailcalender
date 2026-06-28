@@ -35,6 +35,10 @@ jobs:
           # 텔레그램 알림 (저장소 Secrets 에 등록)
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Notion 누적 저장 (DB 또는 PAGE 중 하나만 설정)
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
         run: python main.py
 
       - name: Upload report artifact

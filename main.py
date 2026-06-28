@@ -13,7 +13,7 @@ from src.analyzer import analyze_all
 from src.calendar_ics import write_ics
 from src.gmail_client import fetch_emails
 from src.report import build_report, build_telegram_summary
-from src import notify_telegram
+from src import notify_telegram, notify_notion
 
 
 def main() -> None:
@@ -61,6 +61,15 @@ def main() -> None:
             print("      → 전송 완료")
     else:
         print("[i] 텔레그램 미설정 (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) → 알림 건너뜀")
+
+    # Notion 누적 저장 (설정된 경우에만)
+    if notify_notion.is_configured(config):
+        mode = "DB(새 페이지)" if config.notion_database_id else "페이지(이어쓰기)"
+        print(f"[+] Notion에 누적 저장 중... ({mode})")
+        if notify_notion.export(config, analyses):
+            print("      → 저장 완료")
+    else:
+        print("[i] Notion 미설정 (NOTION_TOKEN + DATABASE_ID/PAGE_ID) → 저장 건너뜀")
 
     print("\n완료 ✅")
     print(f"  - 보고서:      {report_path}")

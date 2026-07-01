@@ -1,0 +1,60 @@
+name: Mail triage (rule-based)
+
+# PC 없이 GitHub 클라우드에서 정해진 시각마다 자동 실행됩니다.
+on:
+  schedule:
+    # UTC 기준. 아래는 매일 23:00 UTC = 한국시간(KST) 08:00.
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}  # 저장소 Actions 탭에서 수동 실행도 가능
+
+permissions:
+  contents: write  # 생성된 보고서를 저장소에 커밋하기 위해 필요
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run triage
+        env:
+          # 로컬에서 만든 token.json 의 '내용 전체'를 Secret(GMAIL_TOKEN)에 저장해 두세요.
+          GMAIL_TOKEN: ${{ secrets.GMAIL_TOKEN }}
+          GMAIL_QUERY: ${{ vars.GMAIL_QUERY || 'is:unread newer_than:1d' }}
+          MAX_EMAILS: ${{ vars.MAX_EMAILS || '30' }}
+          OUTPUT_DIR: output
+          # 텔레그램 알림 (저장소 Secrets 에 등록)
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Notion 누적 저장 (DB 또는 PAGE 중 하나만 설정)
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
+        run: python main.py
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-report
+          path: output/
+
+      - name: Commit report to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/report.md output/events.ics || true
+          if git diff --cached --quiet; then
+            echo "변경 사항 없음 — 커밋 건너뜀"
+          else
+            git commit -m "chore: 메일 요약 보고서 자동 갱신 ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          fi
